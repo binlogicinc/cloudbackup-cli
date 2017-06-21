@@ -1,0 +1,5 @@
+package: github.com/binlogicinc/cloudbackup-cli
+import:
+- package: github.com/spf13/cobra
+  subpackages:
+  - cobra
