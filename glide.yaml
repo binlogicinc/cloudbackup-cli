@@ -1,5 +1,5 @@
 package: github.com/binlogicinc/cloudbackup-cli
 import:
+- package: github.com/mitchellh/go-homedir
 - package: github.com/spf13/cobra
-  subpackages:
-  - cobra
+- package: github.com/spf13/viper

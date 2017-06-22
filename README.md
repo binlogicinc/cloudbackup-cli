@@ -1,5 +1,5 @@
 # Binlogic CloudBackup Cli
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/cweill/gotests/blob/master/LICENSE) [![Build
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/cweill/gotests/blob/master/LICENSE) 
 
 ---
 

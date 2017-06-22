@@ -1,31 +1,62 @@
+// Copyright © 2017  Alejandro Bednarik <alejandro@binlogic.net>
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
 	"fmt"
 	"os"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+var cfgFile string
+
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
+	Use:   "cloudbackup-cli",
+	Short: "command-line tool to interact with a Binlogic CloudBackup [ https://www.binlogic.io/ ]",
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	//	Run: func(cmd *cobra.Command, args []string) { },
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	if err := RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cloudbackup-cli.toml")
-	RootCmd.PersistentFlags().StringP("author", "a", "YOUR NAME", "Author name for copyright attribution")
-	RootCmd.PersistentFlags().StringVarP(&userLicense, "license", "l", "", "Name of license for the project (can provide `licensetext` in config)")
-	viper.BindPFlag("author", RootCmd.PersistentFlags().Lookup("author"))
-	viper.BindPFlag("projectbase", RootCmd.PersistentFlags().Lookup("projectbase"))
-	viper.BindPFlag("useViper", RootCmd.PersistentFlags().Lookup("viper"))
-	viper.SetDefault("author", "NAME HERE <EMAIL ADDRESS>")
-	viper.SetDefault("license", "apache")
+
+	// Here you will define your flags and configuration settings.
+	// Cobra supports persistent flags, which, if defined here,
+	// will be global for your application.
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cloudbackup-cli.yaml)")
+
+	// Cobra also supports local flags, which will only run
+	// when this action is called directly.
+	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func Execute() {
-	rootCmd.Execute()
-}
-
-func main() {
-	// Don't forget to read config either from cfgFile or from home directory!
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -33,28 +64,19 @@ func main() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(home)
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".cobra" (without extension).
+		// Search config in home directory with name ".cloudbackup-cli" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".cobra")
+		viper.SetConfigName(".cloudbackup-cli")
 	}
 
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Can't read config:", err)
-		os.Exit(1)
-	}
-}
+	viper.AutomaticEnv() // read in environment variables that match
 
-var RootCmd = &cobra.Command{
-	Use:   "hugo",
-	Short: "Hugo is a very fast static site generator",
-	Long: `A Fast and Flexible Static Site Generator built with
-                love by spf13 and friends in Go.
-                Complete documentation is available at http://hugo.spf13.com`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
-	},
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
 }
