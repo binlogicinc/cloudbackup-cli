@@ -167,6 +167,19 @@ func (cli *signedHTTPClient) parseResponseJSON(resp *http.Response) (body []byte
 	return
 }
 
+func (cli *signedHTTPClient) isResponseOk(body []byte) (bool, error) {
+	var val map[string]interface{}
+
+	err := json.Unmarshal(body, &val)
+
+	if err != nil {
+		err = wrap("while unmarshalling body "+string(body), err)
+		return false, err
+	}
+
+	return cli.isJSONResponseOk(body, val)
+}
+
 func (cli *signedHTTPClient) isJSONResponseOk(body []byte, val map[string]interface{}) (bool, error) {
 	if status, ok := val["status"]; ok { //if status is present
 		if s, ok2 := status.(string); s != "ok" {

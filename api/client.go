@@ -14,7 +14,9 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"path"
 	"strconv"
@@ -24,14 +26,6 @@ var (
 	defaultHeaders = map[string]string{
 		"Content-type": "application/json",
 	}
-)
-
-type databaseType int
-
-const (
-	DB_MYSQL    databaseType = 1
-	DB_MONGO    databaseType = 2
-	DB_POSTGRES databaseType = 3
 )
 
 type client struct {
@@ -82,12 +76,21 @@ func (c *client) CreateServer(name string, dbType databaseType, readonly bool,
 	return
 }
 
-func (c *client) UpdateServer(s *Server) {
-	//POST http://192.168.10.80/api/servers/521/
+func (c *client) UpdateServer(s Server) error {
+	if s.ID <= 0 {
+		return fmt.Errorf("Invalid ID %d for server", s.ID)
+	}
+
+	_, err := c.httpClient.postJSON(c.host+"/servers/"+strconv.Itoa(s.ID), s)
+
+	if err != nil {
+		return wrap("while doing client post", err)
+	}
+
+	return nil
 }
 
 func (c *client) DeleteServer(id int) error {
-	// DELETE http://192.168.10.80/api/servers/521/
 	resp, err := c.httpClient.SignedDelete(c.host+"/servers/"+strconv.Itoa(id), defaultHeaders)
 
 	if err != nil {
@@ -109,10 +112,43 @@ func (c *client) DeleteServer(id int) error {
 	return nil
 }
 
-func (c *client) GetServer() {
-	//GET http://192.168.10.80/api/servers/521/
+func (c *client) GetServer(id int) (server Server, err error) {
+	resp, err := c.httpClient.SignedGet(c.host+"/servers/"+strconv.Itoa(id), defaultHeaders)
+
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode/100 != 2 {
+
+		if err != nil {
+			return
+		}
+
+		_, err = c.httpClient.isResponseOk(body)
+
+		if err != nil {
+			return
+		}
+
+		return server, fmt.Errorf("Server returned HTTP %d but there is no error "+
+			"in response %s (this should not happen!)", resp.StatusCode, string(body))
+	}
+
+	err = json.Unmarshal(body, &server)
+
+	return
 }
 
 func wrap(context string, err error) error {
+	if err == nil {
+		return nil
+	}
+
 	return fmt.Errorf("%s, %s", err, context)
 }

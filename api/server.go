@@ -13,7 +13,10 @@
 
 package api
 
-import ()
+import (
+	"fmt"
+	"strings"
+)
 
 type Server struct {
 	ID       int          `json:"id"`
@@ -26,6 +29,42 @@ type Server struct {
 	DbPass   string       `json:"dbPass"`
 }
 
-func (s *Server) create(httpClient *signedHTTPClient) {
+type databaseType int
 
+const (
+	DB_MYSQL    databaseType = 1
+	DB_MONGO    databaseType = 2
+	DB_POSTGRES databaseType = 3
+)
+
+func (d databaseType) String() string {
+	switch d {
+	case DB_MONGO:
+		return "MongoDB"
+
+	case DB_MYSQL:
+		return "MySQL"
+
+	case DB_POSTGRES:
+		return "PostgreSQL"
+	}
+
+	return "Unknown"
+}
+
+func ParseDatabaseType(s string) (databaseType, error) {
+	switch strings.TrimSpace(strings.ToLower(s)) {
+	case "mongodb":
+		return DB_MONGO, nil
+	case "mysql":
+		return DB_MYSQL, nil
+	case "mariadb":
+		return DB_MYSQL, nil
+	case "percona_server":
+		return DB_MYSQL, nil
+	case "postgresql":
+		return DB_POSTGRES, nil
+	}
+
+	return 0, fmt.Errorf("Database type %s not recognized", s)
 }
