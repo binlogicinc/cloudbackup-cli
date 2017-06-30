@@ -145,6 +145,24 @@ func (c *client) GetServer(id int) (server Server, err error) {
 	return
 }
 
+func (c *client) GetServerInstall(id int) (body []byte, err error) {
+	resp, err := c.httpClient.SignedGet(c.host+"/servers/"+strconv.Itoa(id)+"/install", defaultHeaders)
+
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err = ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode/100 != 2 {
+		err = fmt.Errorf("Server responded HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	return
+}
+
 func wrap(context string, err error) error {
 	if err == nil {
 		return nil
