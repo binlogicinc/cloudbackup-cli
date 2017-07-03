@@ -1,4 +1,4 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2017 Alejandro Bednarik <alejandro@binlogic.net>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,6 +15,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -26,10 +27,15 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print cloudbackup-cli version and exit",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("DEBUG: %s\n", version)
+		ShowVersion()
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(versionCmd)
+}
+
+// ShowVersion prints the version to stdout
+func ShowVersion() {
+	fmt.Fprintf(os.Stdout, "%s\n", version)
 }

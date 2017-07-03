@@ -27,10 +27,7 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "cloudbackup-cli",
-	Short: "command-line tool to interact with a Binlogic CloudBackup [ https://www.binlogic.io/ ]",
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Short: "command-line tool to interact with Binlogic CloudBackup [ https://www.binlogic.io/ ]",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -48,11 +45,11 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cloudbackup-cli.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file in toml format (default is $HOME/.cloudbackup-cli.toml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.

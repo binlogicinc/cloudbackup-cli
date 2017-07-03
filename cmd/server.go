@@ -22,20 +22,59 @@ import (
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Create, update, remove and get information for servers in Binlogic CloudBackup",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("server called")
 	},
 }
 
+var serverNew = &cobra.Command{
+	Use:   "new",
+	Short: "Add new servers to Binlogic CloudBackup",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("server new called")
+	},
+}
+
+var serverUpdate = &cobra.Command{
+	Use:   "update",
+	Short: "Update a server in Binlogic CloudBackup",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("server update called")
+	},
+}
+
+var serverDelete = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete or remove a server in Binlogic CloudBackup",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("server delete called")
+	},
+}
+
+var serverInfo = &cobra.Command{
+	Use:   "info",
+	Short: "Get information for a server in Binlogic CloudBackup",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("server info called")
+	},
+}
+
+var serverInstall = &cobra.Command{
+	Use:   "install",
+	Short: "Get install link for a server in Binlogic CloudBackup",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("server install called")
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(serverCmd)
+	serverCmd.AddCommand(serverNew)
+	serverCmd.AddCommand(serverUpdate)
+	serverCmd.AddCommand(serverDelete)
+	serverCmd.AddCommand(serverInfo)
+	serverCmd.AddCommand(serverInstall)
 
 	// Here you will define your flags and configuration settings.
 
