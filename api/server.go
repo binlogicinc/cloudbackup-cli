@@ -14,6 +14,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -67,4 +68,16 @@ func ParseDatabaseType(s string) (databaseType, error) {
 	}
 
 	return 0, fmt.Errorf("Database type %s not recognized", s)
+}
+
+func (s Server) String() string {
+	return fmt.Sprintf("ID: %d\nName: %s\nDB Type: %s\nReadonly: %t\nDB Host: %s\n"+
+		"DB Port: %s\nDB User: %s\nDB Pass: %s\n", s.ID, s.Name, s.DbType.String(),
+		s.Readonly, s.DbHost, s.DbPort, s.DbUser, s.DbPass)
+}
+
+func (s Server) JSONString() string {
+	bs, _ := json.Marshal(s)
+
+	return string(bs)
 }

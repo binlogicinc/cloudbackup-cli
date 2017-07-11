@@ -28,12 +28,22 @@ var (
 	}
 )
 
-type client struct {
+type Client struct {
 	host       string
 	httpClient *signedHTTPClient
 }
 
-func NewAPIClient(host, accessKey, accessSecret string) (*client, error) {
+func NewAPIClient(host, accessKey, accessSecret string) (*Client, error) {
+	if host == "" {
+		return nil, fmt.Errorf("API Host cannot be empty")
+	}
+	if accessKey == "" {
+		return nil, fmt.Errorf("API Access key cannot be empty")
+	}
+	if accessSecret == "" {
+		return nil, fmt.Errorf("API Access secret cannot be empty")
+	}
+
 	u, err := url.Parse(host)
 
 	if err != nil {
@@ -43,13 +53,13 @@ func NewAPIClient(host, accessKey, accessSecret string) (*client, error) {
 	u.Scheme = "https"
 	u.Path = path.Join(u.Path, "api")
 
-	return &client{
+	return &Client{
 		host:       u.String(),
 		httpClient: NewSignedHTTPClient(accessKey, accessSecret, 10), //default 10 secs timeout
 	}, nil
 }
 
-func (c *client) CreateServer(name string, dbType databaseType, readonly bool,
+func (c *Client) CreateServer(name string, dbType databaseType, readonly bool,
 	dbHost, dbPort, dbUser, dbPass string) (server Server, err error) {
 
 	server = Server{
@@ -76,7 +86,7 @@ func (c *client) CreateServer(name string, dbType databaseType, readonly bool,
 	return
 }
 
-func (c *client) UpdateServer(s Server) error {
+func (c *Client) UpdateServer(s Server) error {
 	if s.ID <= 0 {
 		return fmt.Errorf("Invalid ID %d for server", s.ID)
 	}
@@ -90,7 +100,7 @@ func (c *client) UpdateServer(s Server) error {
 	return nil
 }
 
-func (c *client) DeleteServer(id int) error {
+func (c *Client) DeleteServer(id int) error {
 	resp, err := c.httpClient.SignedDelete(c.host+"/servers/"+strconv.Itoa(id), defaultHeaders)
 
 	if err != nil {
@@ -112,7 +122,7 @@ func (c *client) DeleteServer(id int) error {
 	return nil
 }
 
-func (c *client) GetServer(id int) (server Server, err error) {
+func (c *Client) GetServer(id int) (server Server, err error) {
 	resp, err := c.httpClient.SignedGet(c.host+"/servers/"+strconv.Itoa(id), defaultHeaders)
 
 	if err != nil {
@@ -145,7 +155,7 @@ func (c *client) GetServer(id int) (server Server, err error) {
 	return
 }
 
-func (c *client) GetServerInstall(id int) (body []byte, err error) {
+func (c *Client) GetServerInstall(id int) (body []byte, err error) {
 	resp, err := c.httpClient.SignedGet(c.host+"/servers/"+strconv.Itoa(id)+"/install", defaultHeaders)
 
 	if err != nil {
@@ -161,6 +171,11 @@ func (c *client) GetServerInstall(id int) (body []byte, err error) {
 	}
 
 	return
+}
+
+func (c *Client) String() string {
+	return fmt.Sprintf("Host: %s, Access Key: %s, Secret Key %s", c.host,
+		c.httpClient.AccessKey, c.httpClient.SecretKey)
 }
 
 func wrap(context string, err error) error {
