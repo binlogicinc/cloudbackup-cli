@@ -66,6 +66,18 @@ func (c *Client) CreateServer(name string, dbType databaseType, readonly bool,
 		0, name, dbType, readonly, dbHost, dbPort, dbUser, dbPass,
 	}
 
+	if name == "" {
+		return server, fmt.Errorf("Server name cannot be empty")
+	}
+
+	if dbHost == "" {
+		return server, fmt.Errorf("Database host cannot be empty")
+	}
+
+	if dbPort == "" {
+		return server, fmt.Errorf("Database port cannot be empty")
+	}
+
 	val, err := c.httpClient.postJSON(c.host+"/servers", server)
 
 	if err != nil {
@@ -89,6 +101,18 @@ func (c *Client) CreateServer(name string, dbType databaseType, readonly bool,
 func (c *Client) UpdateServer(s Server) error {
 	if s.ID <= 0 {
 		return fmt.Errorf("Invalid ID %d for server", s.ID)
+	}
+
+	if s.Name == "" {
+		return fmt.Errorf("Server name cannot be empty")
+	}
+
+	if s.DbHost == "" {
+		return fmt.Errorf("Database host cannot be empty")
+	}
+
+	if s.DbPort == "" {
+		return fmt.Errorf("Database port cannot be empty")
 	}
 
 	_, err := c.httpClient.postJSON(c.host+"/servers/"+strconv.Itoa(s.ID), s)

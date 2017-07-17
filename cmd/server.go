@@ -14,84 +14,194 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/binlogicinc/cloudbackup-cli/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
+	"os/exec"
 )
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Create, update, remove and get information for servers in Binlogic CloudBackup",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server called")
-	},
 }
 
 var serverNew = &cobra.Command{
-	Use:   "new",
-	Short: "Add new servers to Binlogic CloudBackup",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server new called")
-		fmt.Println("api client", apiClient)
-		fmt.Println("server id", viper.GetInt("server-id"))
+	Use:     "new",
+	Short:   "Add new servers to Binlogic CloudBackup",
+	PreRunE: checkRequiredFlags,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name := getStringFlag(cmd, "name")
+		readonly := getBoolFlag(cmd, "readonly")
+		dbType := getStringFlag(cmd, "db-type")
+		dbHost := getStringFlag(cmd, "db-host")
+		dbPort := getStringFlag(cmd, "db-port")
+		dbUser := getStringFlag(cmd, "db-user")
+		dbPass := getStringFlag(cmd, "db-pass")
+
+		databaseType, err := api.ParseDatabaseType(dbType)
+
+		if err != nil {
+			return err
+		}
+
+		server, err := apiClient.CreateServer(name, databaseType, readonly, dbHost, dbPort, dbUser, dbPass)
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Server created successfully")
+
+		if getBoolFlag(cmd, "json") {
+			fmt.Println(server.JSONString())
+		} else {
+			fmt.Println(server)
+		}
+
+		return nil
 	},
 }
 
 var serverUpdate = &cobra.Command{
-	Use:   "update",
-	Short: "Update a server in Binlogic CloudBackup",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server update called")
-		fmt.Println("api client", apiClient)
-		fmt.Println("server id", viper.GetInt("server-id"))
+	Use:     "update",
+	Short:   "Update a server in Binlogic CloudBackup",
+	PreRunE: checkRequiredFlags,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		serverID := getIntFlag(cmd, "server-id")
+
+		if serverID == 0 {
+			return fmt.Errorf("Server ID cannot be zero")
+		}
+
+		server, err := apiClient.GetServer(serverID)
+
+		if err != nil {
+			return err
+		}
+
+		if flag := cmd.Flag("name"); flag != nil {
+			server.Name = flag.Value.String()
+		}
+
+		if flag := cmd.Flag("db-host"); flag != nil {
+			server.DbHost = flag.Value.String()
+		}
+
+		if flag := cmd.Flag("db-port"); flag != nil {
+			server.DbPort = flag.Value.String()
+		}
+
+		if flag := cmd.Flag("db-user"); flag != nil {
+			server.DbUser = flag.Value.String()
+		}
+
+		if flag := cmd.Flag("db-pass"); flag != nil {
+			server.DbPass = flag.Value.String()
+		}
+
+		if flag := cmd.Flag("readonly"); flag != nil {
+			server.Readonly = getBoolFlag(cmd, "readonly")
+		}
+
+		if flag := cmd.Flag("db-type"); flag != nil {
+			newDbType, err := api.ParseDatabaseType(flag.Value.String())
+
+			if err != nil {
+				return err
+			}
+
+			if server.DbType != newDbType {
+				return fmt.Errorf("Can't change db-type from %s to %s", server.DbType, newDbType)
+			}
+		}
+
+		if err := apiClient.UpdateServer(server); err != nil {
+			return err
+		}
+
+		if getBoolFlag(cmd, "json") {
+			fmt.Println(server.JSONString())
+		} else {
+			fmt.Println(server)
+		}
+
+		return nil
 	},
 }
 
 var serverDelete = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete or remove a server in Binlogic CloudBackup",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server delete called")
-		fmt.Println("api client", apiClient)
-		fmt.Println("server id", viper.GetInt("server-id"))
+	Use:     "delete",
+	Short:   "Delete or remove a server in Binlogic CloudBackup",
+	PreRunE: checkRequiredFlags,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		serverID := getIntFlag(cmd, "server-id")
+
+		if serverID == 0 {
+			return fmt.Errorf("Server ID cannot be zero")
+		}
+
+		return apiClient.DeleteServer(serverID)
 	},
 }
 
 var serverInfo = &cobra.Command{
-	Use:   "info",
-	Short: "Get information for a server in Binlogic CloudBackup",
-	Run: func(cmd *cobra.Command, args []string) {
-		if server, err := apiClient.GetServer(viper.GetInt("server-id")); err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting server.\n%s", err)
+	Use:     "info",
+	Short:   "Get information for a server in Binlogic CloudBackup",
+	PreRunE: checkRequiredFlags,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		serverID := getIntFlag(cmd, "server-id")
+
+		if serverID == 0 {
+			return fmt.Errorf("Server ID cannot be zero")
+		}
+
+		if server, err := apiClient.GetServer(serverID); err != nil {
+			return err
 		} else {
-			if viper.GetBool("json") {
+			if getBoolFlag(cmd, "json") {
 				fmt.Println(server.JSONString())
 			} else {
 				fmt.Println(server)
 			}
-
 		}
+
+		return nil
 	},
 }
 
 var serverInstall = &cobra.Command{
 	Use:     "install",
-	Short:   "Get install link for a server in Binlogic CloudBackup",
+	Short:   "Install a server in this host or print the install script via stdout",
 	PreRunE: checkRequiredFlags,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("server install called")
-		fmt.Println("api client", apiClient)
-		fmt.Println("server id", viper.GetInt("server-id"))
+		serverID := getIntFlag(cmd, "server-id")
 
-		if install, err := apiClient.GetServerInstall(viper.GetInt("server-id")); err != nil {
+		if serverID == 0 {
+			return fmt.Errorf("Server ID cannot be zero")
+		}
+
+		if install, err := apiClient.GetServerInstall(serverID); err != nil {
 			return err
 		} else {
 			if viper.GetBool("dry-run") {
 				fmt.Println(string(install))
 			} else {
-				//TODO actually execute the install script
+				if err := checkRoot(); err != nil {
+					return err
+				}
+
+				cmd := exec.Command("bash")
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				cmd.Stdin = bytes.NewReader(install)
+
+				if err := cmd.Run(); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -113,15 +223,39 @@ func init() {
 	// and all subcommands, e.g.:
 	// serverCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-	addPersistentInt(serverCmd, "server-id", 0, "Server ID")
+	serverInstall.Flags().Int("server-id", 0, "Server ID")
+	serverInstall.Flags().Bool("dry-run", false, "Output install script instead of executing it")
 
-	addFlagBool(serverInfo, "json", false, "Output info in JSON format")
-	addFlagBool(serverInstall, "dry-run", false, "Output install script instead of executing it")
-	// serverInstall.MarkFlagRequired("dry-run")
+	serverInfo.Flags().Int("server-id", 0, "Server ID")
+	serverInfo.Flags().Bool("json", false, "Output info in JSON format")
 
-	// viper.BindPFlag("accesskey", RootCmd.PersistentFlags().Lookup("accesskey"))
+	serverDelete.Flags().Int("server-id", 0, "Server ID")
+
+	addCreateServerFlags(serverNew)
+	serverNew.MarkFlagRequired("name")
+	serverNew.MarkFlagRequired("db-type")
+	serverNew.MarkFlagRequired("db-port")
+
+	addCreateServerFlags(serverUpdate)
+	serverUpdate.Flags().Int("server-id", 0, "Server ID")
+
+	serverDelete.MarkPersistentFlagRequired("server-id")
+	serverInstall.MarkPersistentFlagRequired("server-id")
+	serverInfo.MarkPersistentFlagRequired("server-id")
+	serverUpdate.MarkPersistentFlagRequired("server-id")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func addCreateServerFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool("json", false, "Output info in JSON format")
+	cmd.Flags().String("name", "", "The server name to show in the control panel")
+	cmd.Flags().String("db-type", "", "The database type (mysql, mariadb, percona_server, mongodb, postgresql)")
+	cmd.Flags().Bool("readonly", false, "If the server is readonly (can be backed up but can't receive restores)")
+	cmd.Flags().String("db-host", "localhost", "The host of the database to connect the agent to")
+	cmd.Flags().String("db-port", "", "The port of the database to connect the agent to")
+	cmd.Flags().String("db-user", "", "The user the agent will use to connect to the database")
+	cmd.Flags().String("db-pass", "", "The password the agent will use to connect to the database")
 }

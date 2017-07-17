@@ -52,9 +52,9 @@ func init() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file in toml format (default is $HOME/.cloudbackup-cli.toml)")
 
-	addPersistentString(RootCmd, "access-key", "", "API access key")
-	addPersistentString(RootCmd, "secret-key", "", "API secret key")
-	addPersistentString(RootCmd, "host", "", "Your host/domain of cloudbackup panel")
+	addPersistentString("access-key", "", "API access key", RootCmd)
+	addPersistentString("secret-key", "", "API secret key", RootCmd)
+	addPersistentString("host", "", "Your host/domain of cloudbackup panel", RootCmd)
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -104,32 +104,62 @@ func initAPIClient() {
 	}
 }
 
-func addPersistentInt(cmd *cobra.Command, name string, value int, usage string) {
+func getBoolFlag(cmd *cobra.Command, name string) bool {
+	b, err := cmd.Flags().GetBool(name)
+
+	if err != nil {
+		return false
+	}
+
+	return b
+}
+
+func getIntFlag(cmd *cobra.Command, name string) int {
+	i, err := cmd.Flags().GetInt(name)
+
+	if err != nil {
+		return 0
+	}
+
+	return i
+}
+
+func getStringFlag(cmd *cobra.Command, name string) string {
+	s, err := cmd.Flags().GetString(name)
+
+	if err != nil {
+		return ""
+	}
+
+	return s
+}
+
+func addPersistentInt(name string, value int, usage string, cmd *cobra.Command) {
 	cmd.PersistentFlags().Int(name, value, usage)
 	viper.BindPFlag(name, cmd.PersistentFlags().Lookup(name))
 }
 
-func addPersistentBool(cmd *cobra.Command, name string, value bool, usage string) {
+func addPersistentBool(name string, value bool, usage string, cmd *cobra.Command) {
 	cmd.PersistentFlags().Bool(name, value, usage)
 	viper.BindPFlag(name, cmd.PersistentFlags().Lookup(name))
 }
 
-func addPersistentString(cmd *cobra.Command, name string, value string, usage string) {
+func addPersistentString(name string, value string, usage string, cmd *cobra.Command) {
 	cmd.PersistentFlags().String(name, value, usage)
 	viper.BindPFlag(name, cmd.PersistentFlags().Lookup(name))
 }
 
-func addFlagInt(cmd *cobra.Command, name string, value int, usage string) {
+func addFlagInt(name string, value int, usage string, cmd *cobra.Command) {
 	cmd.Flags().Int(name, value, usage)
 	viper.BindPFlag(name, cmd.Flags().Lookup(name))
 }
 
-func addFlagBool(cmd *cobra.Command, name string, value bool, usage string) {
+func addFlagBool(name string, value bool, usage string, cmd *cobra.Command) {
 	cmd.Flags().Bool(name, value, usage)
 	viper.BindPFlag(name, cmd.Flags().Lookup(name))
 }
 
-func addFlagString(cmd *cobra.Command, name string, value string, usage string) {
+func addFlagString(name string, value string, usage string, cmd *cobra.Command) {
 	cmd.Flags().String(name, value, usage)
 	viper.BindPFlag(name, cmd.Flags().Lookup(name))
 }
@@ -157,6 +187,14 @@ func checkRequiredFlags(cmd *cobra.Command, args []string) error {
 
 	if requiredError {
 		return errors.New("Required flag `" + flagName + "` has not been set")
+	}
+
+	return nil
+}
+
+func checkRoot() error {
+	if os.Getuid() != 0 || os.Getgid() != 0 {
+		return fmt.Errorf("You need root privileges to execute this command")
 	}
 
 	return nil

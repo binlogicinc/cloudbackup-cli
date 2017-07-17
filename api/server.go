@@ -55,15 +55,13 @@ func (d databaseType) String() string {
 
 func ParseDatabaseType(s string) (databaseType, error) {
 	switch strings.TrimSpace(strings.ToLower(s)) {
-	case "mongodb":
+	case "mongodb", "mongo":
 		return DB_MONGO, nil
-	case "mysql":
+
+	case "mysql", "mariadb", "percona_server":
 		return DB_MYSQL, nil
-	case "mariadb":
-		return DB_MYSQL, nil
-	case "percona_server":
-		return DB_MYSQL, nil
-	case "postgresql":
+
+	case "postgresql", "postgre_sql", "postgre", "postgres":
 		return DB_POSTGRES, nil
 	}
 
