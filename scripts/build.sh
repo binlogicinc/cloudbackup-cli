@@ -13,5 +13,7 @@ getCurrTag() {
   echo "Cleaning up old builds..." && \
   rm -rf "./build"
 
-go build -ldflags "-X github.com/binlogicinc/cloudbackup-cli/cmd.version=${getCurrTag}" \
+go build -ldflags "-X github.com/binlogicinc/cloudbackup-cli/cmd.version=$(getCurrTag)" \
   -o="./build/cloudbackup-cli"
+
+echo "Build complete. Binary saved in $(pwd)/build/cloudbackup-cli"
