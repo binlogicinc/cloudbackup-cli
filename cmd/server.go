@@ -48,13 +48,13 @@ var serverNew = &cobra.Command{
 			return err
 		}
 
-		server, err := apiClient.CreateServer(name, databaseType, readonly, dbHost, dbPort, dbUser, dbPass)
+		server, err := getAPIClient().CreateServer(name, databaseType, readonly, dbHost, dbPort, dbUser, dbPass)
 
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Server created successfully")
+		printVerbose("Server created successfully")
 
 		if getBoolFlag(cmd, "json") {
 			fmt.Println(server.JSONString())
@@ -77,7 +77,7 @@ var serverUpdate = &cobra.Command{
 			return fmt.Errorf("Server ID cannot be zero")
 		}
 
-		server, err := apiClient.GetServer(serverID)
+		server, err := getAPIClient().GetServer(serverID)
 
 		if err != nil {
 			return err
@@ -119,7 +119,7 @@ var serverUpdate = &cobra.Command{
 			}
 		}
 
-		if err := apiClient.UpdateServer(server); err != nil {
+		if err := getAPIClient().UpdateServer(server); err != nil {
 			return err
 		}
 
@@ -144,7 +144,7 @@ var serverDelete = &cobra.Command{
 			return fmt.Errorf("Server ID cannot be zero")
 		}
 
-		return apiClient.DeleteServer(serverID)
+		return getAPIClient().DeleteServer(serverID)
 	},
 }
 
@@ -159,7 +159,7 @@ var serverInfo = &cobra.Command{
 			return fmt.Errorf("Server ID cannot be zero")
 		}
 
-		if server, err := apiClient.GetServer(serverID); err != nil {
+		if server, err := getAPIClient().GetServer(serverID); err != nil {
 			return err
 		} else {
 			if getBoolFlag(cmd, "json") {
@@ -184,7 +184,7 @@ var serverInstall = &cobra.Command{
 			return fmt.Errorf("Server ID cannot be zero")
 		}
 
-		if install, err := apiClient.GetServerInstall(serverID); err != nil {
+		if install, err := getAPIClient().GetServerInstall(serverID); err != nil {
 			return err
 		} else {
 			if viper.GetBool("dry-run") {

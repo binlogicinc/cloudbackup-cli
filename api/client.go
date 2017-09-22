@@ -197,6 +197,24 @@ func (c *Client) GetServerInstall(id int) (body []byte, err error) {
 	return
 }
 
+func (c *Client) GetBackupKeys() (body []byte, err error) {
+	resp, err := c.httpClient.SignedGet(c.host+"/backups/keys", defaultHeaders)
+
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err = ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode/100 != 2 {
+		err = fmt.Errorf("Server responded HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	return
+}
+
 func (c *Client) String() string {
 	return fmt.Sprintf("Host: %s, Access Key: %s, Secret Key %s", c.host,
 		c.httpClient.AccessKey, c.httpClient.SecretKey)
