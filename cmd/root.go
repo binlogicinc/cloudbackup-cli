@@ -27,7 +27,7 @@ import (
 )
 
 var cfgFile string
-var apiClient *api.Client
+var verbose bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -45,12 +45,14 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initAPIClient)
+	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file in toml format (default is $HOME/.cloudbackup-cli.toml)")
+
+	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print more verbose logging")
 
 	addPersistentString("access-key", "", "API access key", RootCmd)
 	addPersistentString("secret-key", "", "API secret key", RootCmd)
@@ -85,23 +87,25 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		printVerbose("Using config file: %s", viper.ConfigFileUsed())
 	}
 }
 
-func initAPIClient() {
+func getAPIClient() *api.Client {
 	var err error
 
 	accessKey := viper.GetString("access-key")
 	secretKey := viper.GetString("secret-key")
 	host := viper.GetString("host")
 
-	apiClient, err = api.NewAPIClient(host, accessKey, secretKey)
+	apiClient, err := api.NewAPIClient(host, accessKey, secretKey)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	return apiClient
 }
 
 func getBoolFlag(cmd *cobra.Command, name string) bool {
@@ -198,4 +202,10 @@ func checkRoot() error {
 	}
 
 	return nil
+}
+
+func printVerbose(format string, args ...interface{}) {
+	if verbose {
+		fmt.Printf(format, args...)
+	}
 }

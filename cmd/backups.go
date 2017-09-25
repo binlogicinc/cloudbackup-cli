@@ -1,4 +1,4 @@
-// Copyright © 2017 Alejandro Bednarik <alejandro@binlogic.net>
+// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,22 +15,33 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
-var version string
+var backupsCmd = &cobra.Command{
+	Use:   "backups",
+	Short: "Get all successfull backups information",
+}
 
-// versionCmd represents the version command
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print cloudbackup-cli version and exit",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Fprintf(os.Stdout, "%s\n", version)
+var backupListKeys = &cobra.Command{
+	Use:     "keys",
+	Short:   "Prints all your backup encryption keys in JSON format",
+	PreRunE: checkRequiredFlags,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		keys, err := getAPIClient().GetBackupKeys()
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(keys))
+
+		return nil
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(versionCmd)
+	RootCmd.AddCommand(backupsCmd)
+	backupsCmd.AddCommand(backupListKeys)
+
 }

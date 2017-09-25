@@ -65,8 +65,6 @@ func (cli *signedHTTPClient) SignedDo(verb, url string, body io.Reader,
 
 	cli.sign(req, body)
 
-	fmt.Println(req.Method, req.URL.String(), req.Header)
-
 	resp, err := cli.Do(req)
 
 	if err != nil {
