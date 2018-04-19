@@ -19,7 +19,7 @@ import (
 )
 
 var backupsCmd = &cobra.Command{
-	Use:   "backups",
+	Use:   "backup",
 	Short: "Get all successfull backups information",
 }
 
