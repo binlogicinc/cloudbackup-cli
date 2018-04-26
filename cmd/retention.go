@@ -20,7 +20,6 @@ import (
 	"os"
 )
 
-// serverCmd represents the server command
 var retentionCmd = &cobra.Command{
 	Use:   "retention",
 	Short: "Create, update, remove and get information for retention policies in Binlogic CloudBackup",
@@ -41,7 +40,7 @@ var retentionNew = &cobra.Command{
 			return err
 		}
 
-		server, err := getAPIClient().CreateRetention(name, retentionType, count)
+		retention, err := getAPIClient().CreateRetention(name, retentionType, count)
 
 		if err != nil {
 			return err
@@ -50,9 +49,9 @@ var retentionNew = &cobra.Command{
 		printVerbose("Retention created successfully")
 
 		if getBoolFlag(cmd, "json") {
-			fmt.Println(server.JSONString())
+			fmt.Println(retention.JSONString())
 		} else {
-			fmt.Println(server)
+			fmt.Println(retention)
 		}
 
 		return nil
@@ -175,13 +174,8 @@ func init() {
 	addCreateRetentionFlags(retentionNew)
 
 	addCreateRetentionFlags(retentionUpdate)
-	retentionUpdate.Flags().Int("retention-id", 0, "Server ID")
+	retentionUpdate.Flags().Int("retention-id", 0, "Retention ID")
 	retentionUpdate.MarkFlagRequired("retention-id")
-
-	// serverDelete.MarkPersistentFlagRequired("server-id")
-	// serverInstall.MarkPersistentFlagRequired("server-id")
-	// serverInfo.MarkPersistentFlagRequired("server-id")
-	// serverUpdate.MarkPersistentFlagRequired("server-id")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
