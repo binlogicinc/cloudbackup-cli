@@ -14,12 +14,10 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
 	"path"
-	"strconv"
 )
 
 var (
@@ -57,144 +55,6 @@ func NewAPIClient(host, accessKey, accessSecret string) (*Client, error) {
 		host:       u.String(),
 		httpClient: NewSignedHTTPClient(accessKey, accessSecret, 10), //default 10 secs timeout
 	}, nil
-}
-
-func (c *Client) CreateServer(name string, dbType databaseType, readonly bool,
-	dbHost, dbPort, dbUser, dbPass string) (server Server, err error) {
-
-	server = Server{
-		0, name, dbType, readonly, dbHost, dbPort, dbUser, dbPass,
-	}
-
-	if name == "" {
-		return server, fmt.Errorf("Server name cannot be empty")
-	}
-
-	if dbHost == "" {
-		return server, fmt.Errorf("Database host cannot be empty")
-	}
-
-	if dbPort == "" {
-		return server, fmt.Errorf("Database port cannot be empty")
-	}
-
-	val, err := c.httpClient.postJSON(c.host+"/servers", server)
-
-	if err != nil {
-		err = wrap("while doing client post", err)
-		return
-	}
-
-	if id, ok := val["id"]; ok {
-		if intID, ok2 := id.(float64); ok2 { //json marshalling converts ints to floats
-			server.ID = int(intID)
-		}
-	}
-
-	if server.ID <= 0 {
-		err = fmt.Errorf("Missing ID from server response %v", val)
-	}
-
-	return
-}
-
-func (c *Client) UpdateServer(s Server) error {
-	if s.ID <= 0 {
-		return fmt.Errorf("Invalid ID %d for server", s.ID)
-	}
-
-	if s.Name == "" {
-		return fmt.Errorf("Server name cannot be empty")
-	}
-
-	if s.DbHost == "" {
-		return fmt.Errorf("Database host cannot be empty")
-	}
-
-	if s.DbPort == "" {
-		return fmt.Errorf("Database port cannot be empty")
-	}
-
-	_, err := c.httpClient.postJSON(c.host+"/servers/"+strconv.Itoa(s.ID), s)
-
-	if err != nil {
-		return wrap("while doing client post", err)
-	}
-
-	return nil
-}
-
-func (c *Client) DeleteServer(id int) error {
-	resp, err := c.httpClient.SignedDelete(c.host+"/servers/"+strconv.Itoa(id), defaultHeaders)
-
-	if err != nil {
-		return err
-	}
-
-	body, val, err := c.httpClient.parseResponseJSON(resp)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = c.httpClient.isJSONResponseOk(body, val)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Client) GetServer(id int) (server Server, err error) {
-	resp, err := c.httpClient.SignedGet(c.host+"/servers/"+strconv.Itoa(id), defaultHeaders)
-
-	if err != nil {
-		return
-	}
-
-	defer resp.Body.Close()
-
-	var body []byte
-	body, err = ioutil.ReadAll(resp.Body)
-
-	if resp.StatusCode/100 != 2 {
-
-		if err != nil {
-			return
-		}
-
-		_, err = c.httpClient.isResponseOk(body)
-
-		if err != nil {
-			return
-		}
-
-		return server, fmt.Errorf("Server returned HTTP %d but there is no error "+
-			"in response %s (this should not happen!)", resp.StatusCode, string(body))
-	}
-
-	err = json.Unmarshal(body, &server)
-
-	return
-}
-
-func (c *Client) GetServerInstall(id int) (body []byte, err error) {
-	resp, err := c.httpClient.SignedGet(c.host+"/servers/"+strconv.Itoa(id)+"/install", defaultHeaders)
-
-	if err != nil {
-		return
-	}
-
-	defer resp.Body.Close()
-
-	body, err = ioutil.ReadAll(resp.Body)
-
-	if resp.StatusCode/100 != 2 {
-		err = fmt.Errorf("Server responded HTTP %d: %s", resp.StatusCode, string(body))
-	}
-
-	return
 }
 
 func (c *Client) GetBackupKeys() (body []byte, err error) {
