@@ -35,6 +35,10 @@ const (
 	RETENTION_BY_COUNT retentionType = 2
 )
 
+func (d retentionType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.String())
+}
+
 func (d retentionType) String() string {
 	switch d {
 	case RETENTION_BY_DAYS:
